@@ -1,0 +1,13 @@
+{
+  "manifest_version": 2,
+  "name": "깡갤 감정이미지 테마",
+  "version": "2.0",
+  "description": "novel ai의 감정이미지 테마",
+  "permissions": ["scripting", "activeTab"],
+  "content_scripts": [
+    {
+      "matches": ["https://novelai.net/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
