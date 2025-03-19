@@ -1,13 +1,13 @@
 {
-  "manifest_version": 2,
-  "name": "깡갤 감정이미지 테마",
-  "version": "2.0",
-  "description": "novel ai의 감정이미지 테마",
-  "permissions": ["scripting", "activeTab"],
-  "content_scripts": [
-    {
-      "matches": ["https://novelai.net/*"],
-      "js": ["content.js"]
-    }
-  ]
+    "name": "Novel AI 감정 이미지",
+    "version": "2.0",
+    "description": "Novel AI에서 AI API를 활용하여 캐릭터의 감정을 시각화합니다",
+    "manifest_version": 3,
+    "content_scripts": [
+        {
+            "matches": [ "https://*.novelai.net/*" ],
+            "js": [ "content.js" ]
+        }
+    ],
+    "permissions": [ "clipboardRead", "clipboardWrite", "storage" ]
 }
