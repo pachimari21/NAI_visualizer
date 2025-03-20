@@ -737,7 +737,7 @@
              left: 0 !important;
              top: 0 !important;
              border-radius: 0 !important;
-             z-index: 50;
+             z-index: 99;
             }
 
             .emotion-status-header {
@@ -2532,7 +2532,7 @@
             container.style.width = '100%';
             container.style.right = '0';
             container.style.borderRadius = '0';
-            container.style.zIndex = '10000';
+            container.style.zIndex = '99';
 
             // 드래그 비활성화
             const header = container.querySelector('.emotion-status-header');
