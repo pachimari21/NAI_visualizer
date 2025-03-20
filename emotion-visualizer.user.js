@@ -1,15 +1,12 @@
 // ==UserScript==
-// @name         Novel AI 감정 이미지
-// @namespace    http://tampermonkey.net/
+// @name         Novel AI 감정 이미지 (Chrome)
+// @namespace    chrome-extension
 // @version      2.0
 // @description  Novel AI에서 AI API를 활용하여 캐릭터의 감정을 시각화하고 통합된 UI로 관리
-// @author       ㅇㅇ
-// @match        https://*.novelai.net/*
-// @grant        GM_setValue
-// @grant        GM_getValue
-// @grant        GM_addStyle
-// @grant        GM_xmlhttpRequest
-// @connect      *
+// @author       깡갤
+// @match        https://novelai.net/*
+// @icon         https://novelai.net/_next/static/media/pen-tip-light.47883c90.svg
+// @license      MIT
 // ==/UserScript==
 
 (function () {
@@ -28,14 +25,36 @@
         }
     });
 
+    // localStorage 헬퍼 함수 (GM_* 함수 대체)
+    const localStorage_getValue = function (key, defaultValue) {
+        const value = localStorage.getItem(key);
+        if (value === null) return defaultValue;
+        try {
+            return JSON.parse(value);
+        } catch (e) {
+            return value;
+        }
+    };
+
+    const localStorage_setValue = function (key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+    };
+
+    // GM_addStyle 대체 함수
+    const addStyle = function (css) {
+        const style = document.createElement('style');
+        style.textContent = css;
+        document.head.appendChild(style);
+    };
+
     // 비상 모드 파라미터 확인 - URL에 ?emotion_reset=true 추가 시 설정 초기화
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('emotion_reset') === 'true') {
-        GM_setValue('emotionVisualizerConfig', null);
-        GM_setValue('emotionHistory', []);
-        GM_setValue('emotionContainerPosition', null);
-        GM_setValue('emotionContainerCollapsed', false);
-        GM_setValue('characterPresets', {}); // 캐릭터 프리셋 초기화
+        localStorage_setValue('emotionVisualizerConfig', null);
+        localStorage_setValue('emotionHistory', []);
+        localStorage_setValue('emotionContainerPosition', null);
+        localStorage_setValue('emotionContainerCollapsed', false);
+        localStorage_setValue('characterPresets', {}); // 캐릭터 프리셋 초기화
         alert('감정 시각화 설정이 초기화되었습니다.');
     }
 
@@ -60,13 +79,13 @@
     };
 
     // 설정 불러오기 또는 초기화
-    let config = GM_getValue('emotionVisualizerConfig', defaultConfig);
+    let config = localStorage_getValue('emotionVisualizerConfig', defaultConfig);
 
     // 현재 활성화된 탭
     let activeTab = 'emotion'; // 기본 감정 표시 탭
 
     // 필요한 스타일 추가
-    GM_addStyle(`
+    addStyle(`
         /* 공통 스타일 */
         .emotion-status-container {
             position: fixed;
@@ -681,35 +700,35 @@
             opacity: 1;
         }
 
-            /* Add these styles for collapsible header behavior */
-    .emotion-status-header {
-        cursor: pointer;
-        user-select: none;
-    }
-    
-    .emotion-status-content {
-        transition: max-height 0.3s ease, opacity 0.3s ease;
-        max-height: 70vh;
-        opacity: 1;
-        overflow: hidden;
-    }
-    
-    .emotion-status-container.collapsed .emotion-status-content {
-        max-height: 0;
-        opacity: 0;
-        padding: 0;
-    }
+        /* Add these styles for collapsible header behavior */
+        .emotion-status-header {
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .emotion-status-content {
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            max-height: 70vh;
+            opacity: 1;
+            overflow: hidden;
+        }
+        
+        .emotion-status-container.collapsed .emotion-status-content {
+            max-height: 0;
+            opacity: 0;
+            padding: 0;
+        }
 
-    .emotion-status-header .collapse-indicator {
-        margin-left: 8px;
-        transition: transform 0.3s ease;
-        display: inline-block;
-        font-size: 10px;
-    }
-    
-    .emotion-status-container.collapsed .collapse-indicator {
-        transform: rotate(180deg);
-    }
+        .emotion-status-header .collapse-indicator {
+            margin-left: 8px;
+            transition: transform 0.3s ease;
+            display: inline-block;
+            font-size: 10px;
+        }
+        
+        .emotion-status-container.collapsed .collapse-indicator {
+            transform: rotate(180deg);
+        }
 
         /* 모바일 반응형 스타일 */
         @media (max-width: 768px) {
@@ -769,7 +788,7 @@
         titleElement.appendChild(indicator);
 
         // Check if previously collapsed
-        const isCollapsed = GM_getValue('emotionContainerCollapsed', false);
+        const isCollapsed = localStorage_getValue('emotionContainerCollapsed', false);
         if (isCollapsed) {
             container.classList.add('collapsed');
             indicator.textContent = '▲'; // Flipped arrow when collapsed
@@ -790,7 +809,7 @@
 
             // Save collapsed state
             const isNowCollapsed = container.classList.contains('collapsed');
-            GM_setValue('emotionContainerCollapsed', isNowCollapsed);
+            localStorage_setValue('emotionContainerCollapsed', isNowCollapsed);
 
             // Update indicator
             indicator.textContent = isNowCollapsed ? '▲' : '▼';
@@ -1116,7 +1135,7 @@
         setupDeleteEmotionButtons(container);
 
         // 위치 복원
-        const savedPosition = GM_getValue('emotionContainerPosition', null);
+        const savedPosition = localStorage_getValue('emotionContainerPosition', null);
         if (savedPosition) {
             if (savedPosition.left !== undefined) {
                 container.style.left = savedPosition.left + 'px';
@@ -1274,7 +1293,7 @@
             autoAnalyze
         };
 
-        GM_setValue('emotionVisualizerConfig', config);
+        localStorage_setValue('emotionVisualizerConfig', config);
 
         // 상태창 제목 업데이트
         updateEmotionStatusTitle();
@@ -1292,11 +1311,11 @@
     function exportSettings() {
         // 로컬 스토리지에서 모든 설정 가져오기
         const allSettings = {
-            emotionVisualizerConfig: GM_getValue('emotionVisualizerConfig'),
-            emotionHistory: GM_getValue('emotionHistory', []),
-            emotionContainerPosition: GM_getValue('emotionContainerPosition'),
-            emotionContainerCollapsed: GM_getValue('emotionContainerCollapsed', false),
-            characterPresets: GM_getValue('characterPresets', {})
+            emotionVisualizerConfig: localStorage_getValue('emotionVisualizerConfig'),
+            emotionHistory: localStorage_getValue('emotionHistory', []),
+            emotionContainerPosition: localStorage_getValue('emotionContainerPosition'),
+            emotionContainerCollapsed: localStorage_getValue('emotionContainerCollapsed', false),
+            characterPresets: localStorage_getValue('characterPresets', {})
         };
 
         // JSON 문자열로 변환
@@ -1349,21 +1368,21 @@
                 }
 
                 // 설정 저장
-                GM_setValue('emotionVisualizerConfig', settings.emotionVisualizerConfig);
+                localStorage_setValue('emotionVisualizerConfig', settings.emotionVisualizerConfig);
 
                 if (settings.characterPresets) {
-                    GM_setValue('characterPresets', settings.characterPresets);
+                    localStorage_setValue('characterPresets', settings.characterPresets);
                 }
 
                 if (settings.emotionHistory) {
-                    GM_setValue('emotionHistory', settings.emotionHistory);
+                    localStorage_setValue('emotionHistory', settings.emotionHistory);
                 }
 
                 if (settings.emotionContainerPosition) {
-                    GM_setValue('emotionContainerPosition', settings.emotionContainerPosition);
+                    localStorage_setValue('emotionContainerPosition', settings.emotionContainerPosition);
                 }
 
-                GM_setValue('emotionContainerCollapsed', settings.emotionContainerCollapsed || false);
+                localStorage_setValue('emotionContainerCollapsed', settings.emotionContainerCollapsed || false);
 
                 // 설정 적용
                 config = settings.emotionVisualizerConfig;
@@ -1392,11 +1411,11 @@
         const confirmReset = confirm('정말로 모든 설정을 초기화하시겠습니까? 모든 캐릭터 프리셋과 설정이 삭제됩니다.');
 
         if (confirmReset) {
-            GM_setValue('emotionVisualizerConfig', defaultConfig);
-            GM_setValue('emotionHistory', []);
-            GM_setValue('emotionContainerPosition', null);
-            GM_setValue('emotionContainerCollapsed', false);
-            GM_setValue('characterPresets', {});
+            localStorage_setValue('emotionVisualizerConfig', defaultConfig);
+            localStorage_setValue('emotionHistory', []);
+            localStorage_setValue('emotionContainerPosition', null);
+            localStorage_setValue('emotionContainerCollapsed', false);
+            localStorage_setValue('characterPresets', {});
 
             // 설정 다시 로드
             config = defaultConfig;
@@ -1613,7 +1632,7 @@
     // 감정 기록에 추가 (최대 3개)
     function addEmotionToHistory(emotion) {
         // 이전 기록 가져오기
-        let emotionHistory = GM_getValue('emotionHistory', []);
+        let emotionHistory = localStorage_getValue('emotionHistory', []);
 
         // 새 항목 추가
         const now = new Date();
@@ -1630,7 +1649,7 @@
         }
 
         // 기록 저장
-        GM_setValue('emotionHistory', emotionHistory);
+        localStorage_setValue('emotionHistory', emotionHistory);
 
         // UI 업데이트
         updateEmotionHistoryUI();
@@ -1645,7 +1664,7 @@
         if (!historyListElement) return;
 
         // 기록 가져오기
-        const emotionHistory = GM_getValue('emotionHistory', []);
+        const emotionHistory = localStorage_getValue('emotionHistory', []);
 
         // UI 업데이트
         historyListElement.innerHTML = '';
@@ -1765,7 +1784,7 @@
 
         // 위치 저장 (left, top 기준으로 저장)
         const rect = element.getBoundingClientRect();
-        GM_setValue('emotionContainerPosition', {
+        localStorage_setValue('emotionContainerPosition', {
             left: rect.left,
             top: rect.top,
             isMobile: false
@@ -1913,7 +1932,7 @@
         grid.innerHTML = '';
 
         // 저장된 캐릭터 프리셋 가져오기
-        const characterPresets = GM_getValue('characterPresets', {});
+        const characterPresets = localStorage_getValue('characterPresets', {});
         const currentCharacter = config.characterName;
 
         // 캐릭터 카드 추가
@@ -2137,16 +2156,16 @@
         config.emotionImages = emotionImages;
 
         // 설정 저장
-        GM_setValue('emotionVisualizerConfig', config);
+        localStorage_setValue('emotionVisualizerConfig', config);
 
         // 저장된 프리셋 가져오기
-        let characterPresets = GM_getValue('characterPresets', {});
+        let characterPresets = localStorage_getValue('characterPresets', {});
 
         // 새 프리셋 추가 또는 업데이트
         characterPresets[characterName] = presetData;
 
         // 저장
-        GM_setValue('characterPresets', characterPresets);
+        localStorage_setValue('characterPresets', characterPresets);
 
         // 알림 표시
         showNotification(`"${characterName}" 프리셋이 저장되었습니다.`, 'success');
@@ -2158,7 +2177,7 @@
     // 캐릭터 프리셋 불러오기
     function loadCharacterPreset(characterName) {
         // 저장된 프리셋 가져오기
-        const characterPresets = GM_getValue('characterPresets', {});
+        const characterPresets = localStorage_getValue('characterPresets', {});
 
         // 프리셋 확인
         if (!characterPresets[characterName]) {
@@ -2179,7 +2198,7 @@
         config.autoAnalyze = presetData.autoAnalyze;
 
         // 설정 저장
-        GM_setValue('emotionVisualizerConfig', config);
+        localStorage_setValue('emotionVisualizerConfig', config);
 
         // 상태창 타이틀 업데이트
         updateEmotionStatusTitle();
@@ -2252,7 +2271,7 @@
     // 캐릭터 프리셋 삭제
     function deleteCharacterPreset(characterName) {
         // 저장된 프리셋 가져오기
-        let characterPresets = GM_getValue('characterPresets', {});
+        let characterPresets = localStorage_getValue('characterPresets', {});
 
         // 프리셋 확인
         if (!characterPresets[characterName]) {
@@ -2271,7 +2290,7 @@
         delete characterPresets[characterName];
 
         // 저장
-        GM_setValue('characterPresets', characterPresets);
+        localStorage_setValue('characterPresets', characterPresets);
 
         // UI 업데이트
         updateCharacterGrid();
@@ -2282,7 +2301,7 @@
 
     // 설정 저장 함수
     function saveConfig() {
-        GM_setValue('emotionVisualizerConfig', config);
+        localStorage_setValue('emotionVisualizerConfig', config);
     }
 
     // 설정 저장 시 프리셋 자동 업데이트 기능 추가
@@ -2291,7 +2310,7 @@
         if (!characterName) return;
 
         // 저장된 프리셋 가져오기
-        let characterPresets = GM_getValue('characterPresets', {});
+        let characterPresets = localStorage_getValue('characterPresets', {});
 
         // 현재 캐릭터가 저장된 프리셋인지 확인
         if (characterPresets[characterName]) {
@@ -2317,56 +2336,56 @@
             config.emotionImages = currentEmotionImages;
 
             // 저장
-            GM_setValue('characterPresets', characterPresets);
+            localStorage_setValue('characterPresets', characterPresets);
         }
     }
 
     // 새 문단을 관찰하는 메인 함수
-function setupObserver() {
-    // 이미 생성된 관찰자가 있다면 먼저 연결 해제
-    if (window.paragraphObserver) {
-        window.paragraphObserver.disconnect();
-    }
+    function setupObserver() {
+        // 이미 생성된 관찰자가 있다면 먼저 연결 해제
+        if (window.paragraphObserver) {
+            window.paragraphObserver.disconnect();
+        }
 
-    // 자동 분석이 꺼져 있으면 여기서 함수 종료
-    if (!config.autoAnalyze) {
-        return;
-    }
+        // 자동 분석이 꺼져 있으면 여기서 함수 종료
+        if (!config.autoAnalyze) {
+            return;
+        }
 
-    // 새 관찰자 생성
-    window.paragraphObserver = new MutationObserver(mutations => {
-        mutations.forEach(mutation => {
-            if (mutation.type === 'childList' && mutation.addedNodes.length) {
-                mutation.addedNodes.forEach(node => {
-                    if (node.classList && node.classList.contains('paragraph')) {
-                        const paragraphText = node.textContent;
+        // 새 관찰자 생성
+        window.paragraphObserver = new MutationObserver(mutations => {
+            mutations.forEach(mutation => {
+                if (mutation.type === 'childList' && mutation.addedNodes.length) {
+                    mutation.addedNodes.forEach(node => {
+                        if (node.classList && node.classList.contains('paragraph')) {
+                            const paragraphText = node.textContent;
 
-                        // 텍스트가 있는 경우에만 처리
-                        if (paragraphText && paragraphText.trim()) {
-                            analyzeEmotion(paragraphText)
-                                .then(emotion => {
-                                    if (emotion) {
-                                        updateEmotionImage(emotion);
-                                        showNotification(`감지된 감정: ${emotion}`, 'success', 1500);
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('감정 분석 실패:', error);
-                                    showNotification('감정 분석 실패', 'error');
-                                });
+                            // 텍스트가 있는 경우에만 처리
+                            if (paragraphText && paragraphText.trim()) {
+                                analyzeEmotion(paragraphText)
+                                    .then(emotion => {
+                                        if (emotion) {
+                                            updateEmotionImage(emotion);
+                                            showNotification(`감지된 감정: ${emotion}`, 'success', 1500);
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('감정 분석 실패:', error);
+                                        showNotification('감정 분석 실패', 'error');
+                                    });
+                            }
                         }
-                    }
-                });
-            }
+                    });
+                }
+            });
         });
-    });
 
-    // 문단 추가를 관찰하기 위해 document 관찰 시작
-    window.paragraphObserver.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-}
+        // 문단 추가를 관찰하기 위해 document 관찰 시작
+        window.paragraphObserver.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
 
     // 화면 크기 변경 이벤트 처리 함수
     function handleResize() {
@@ -2403,7 +2422,7 @@ function setupObserver() {
             } else {
                 // 모바일 -> 데스크톱으로 전환
                 // 저장된 원래 스타일로 복원
-                container.style.width ='400px';
+                container.style.width = '400px';
                 container.style.borderRadius = originalContainerStyle.borderRadius;
 
                 // 저장된 위치가 있으면 해당 위치로, 없으면 기본 위치로
@@ -2411,7 +2430,7 @@ function setupObserver() {
                     container.style.left = originalContainerStyle.left + 'px';
                     container.style.top = originalContainerStyle.top + 'px';
                 } else {
-                    const savedPosition = GM_getValue('emotionContainerPosition', null);
+                    const savedPosition = localStorage_getValue('emotionContainerPosition', null);
                     if (savedPosition && !savedPosition.isMobile) {
                         if (savedPosition.left !== undefined) {
                             container.style.left = savedPosition.left + 'px';
