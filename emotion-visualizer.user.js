@@ -1182,7 +1182,7 @@
             container.style.width = '100%';
             container.style.right = '0';
             container.style.borderRadius = '0';
-            container.style.zIndex = '10000';
+            container.style.zIndex = '99';
 
             // 이미지 크기 조정
             const imageDisplay = container.querySelector('.emotion-image-display');
