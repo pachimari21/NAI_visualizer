@@ -1,4 +1,4 @@
-﻿// ==UserScript==
+// ==UserScript==
 // @name         Novel AI 감정 이미지 (Chrome)
 // @namespace    chrome-extension
 // @version      2.0
@@ -11,6 +11,19 @@
 
 (function () {
     'use strict';
+
+    // 스크립트 시작 부분 근처에 이 코드 추가
+    document.addEventListener('DOMContentLoaded', function () {
+        const container = document.getElementById('emotion-status-container');
+        if (container) {
+            container.style.position = 'fixed';
+            container.style.top = '0';
+            container.style.left = '0';
+            container.style.width = '100%';
+            container.style.right = '0';
+            container.style.borderRadius = '0';
+        }
+    });
 
     // localStorage 헬퍼 함수 (GM_* 함수 대체)
     const localStorage_getValue = function (key, defaultValue) {
@@ -719,12 +732,12 @@
 
         /* 모바일 반응형 스타일 */
         @media (max-width: 768px) {
-            .emotion-status-container {
-                width: 100%;
-                right: 0;
-                left: 0;
-                top: 0;
-                border-radius: 0;
+             width: 100% !important;
+             right: 0 !important;
+             left: 0 !important;
+             top: 0 !important;
+             border-radius: 0 !important;
+             z-index: 50 !important;
             }
 
             .emotion-status-header {
@@ -1158,6 +1171,23 @@
             } else {
                 // 기본 모델로 설정
                 modelSelect.value = "gemini-2.0-flash";
+            }
+        }
+
+        // iOS/모바일 환경에서 초기 레이아웃 설정
+        if (isMobile()) {
+            container.style.position = 'fixed';
+            container.style.top = '0';
+            container.style.left = '0';
+            container.style.width = '100%';
+            container.style.right = '0';
+            container.style.borderRadius = '0';
+            container.style.zIndex = '99';
+
+            // 이미지 크기 조정
+            const imageDisplay = container.querySelector('.emotion-image-display');
+            if (imageDisplay) {
+                imageDisplay.style.height = '40vh';
             }
         }
 
@@ -1778,10 +1808,16 @@
         });
     }
 
-    // 모바일 환경 감지 함수
+    // 모바일 환경 감지 함수 - 강화 버전
     function isMobile() {
-        // 화면 너비가 768px 이하면 모바일로 간주
-        return window.innerWidth <= 768;
+        // iOS Safari 특별 감지
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+        // 화면 크기 검사 + UserAgent 검사
+        return window.innerWidth <= 768 ||
+            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+            isIOS;
     }
 
     // AI API에 텍스트 전송하고 감정 가져오는 함수 (Gemini 전용)
@@ -2471,8 +2507,66 @@
         setTimeout(setupObserver, 2000);
     });
 
-    // URL에 초기화 파라미터가 있는지 확인
-    if (window.location.href.includes('emotion_reset')) {
-        showNotification('감정 시각화 설정이 초기화되었습니다. 새로운 설정을 구성하세요.', 'info', 5000);
+    // iOS/모바일에서 강제로 모바일 레이아웃 적용하는 함수
+    function forceApplyMobileLayout() {
+        console.log("강제 모바일 레이아웃 적용 시도");
+        const container = document.getElementById('emotion-status-container');
+        if (!container) return;
+
+        // 모바일 기기 감지
+        if (isMobile()) {
+            console.log("모바일 기기 감지됨, 레이아웃 적용");
+            // 이전 스타일 저장
+            const rect = container.getBoundingClientRect();
+            originalContainerStyle = {
+                width: container.style.width || '280px',
+                borderRadius: container.style.borderRadius || '12px',
+                left: rect.left,
+                top: rect.top
+            };
+
+            // 강제로 모바일 스타일 적용
+            container.style.position = 'fixed';
+            container.style.top = '0';
+            container.style.left = '0';
+            container.style.width = '100%';
+            container.style.right = '0';
+            container.style.borderRadius = '0';
+            container.style.zIndex = '99';
+
+            // 드래그 비활성화
+            const header = container.querySelector('.emotion-status-header');
+            if (header) {
+                header.classList.remove('draggable');
+            }
+
+            // 상태 업데이트
+            previousIsMobile = true;
+
+            // 이미지 크기 조정
+            const imageDisplay = container.querySelector('.emotion-image-display');
+            if (imageDisplay) {
+                imageDisplay.style.height = '40vh';
+            }
+        }
     }
+
+    // 초기 로드 시에도 화면 크기 확인
+    window.addEventListener('load', () => {
+        // 감정 상태창 생성
+        createEmotionStatusContainer();
+
+        // iOS/모바일 체크 및 강제 적용
+        setTimeout(forceApplyMobileLayout, 500);
+
+        // 화면 크기에 따른 스타일 적용
+        handleResize();
+
+        // 일정 시간 후 관찰자 설정 (페이지 초기화를 위한 시간 제공)
+        setTimeout(setupObserver, 2000);
+
+        // 추가: 재시도 로직
+        setTimeout(forceApplyMobileLayout, 2000);
+        setTimeout(forceApplyMobileLayout, 5000);
+    });
 })();
