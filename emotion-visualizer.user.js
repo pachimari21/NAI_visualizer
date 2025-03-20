@@ -737,6 +737,7 @@
              left: 0 !important;
              top: 0 !important;
              border-radius: 0 !important;
+             z-index: 99;
             }
 
             .emotion-status-header {
