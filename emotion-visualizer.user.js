@@ -759,6 +759,14 @@
                 gap: 6px;
             }
         }
+
+            .emotion-status-container.mobile-view {
+              width: 100% !important;
+              right: 0 !important;
+              left: 0 !important;
+              top: 0 !important;
+              border-radius: 0 !important;
+            }
     `);
 
     // Add this function to handle the header click events
@@ -2463,6 +2471,9 @@
         // 감정 상태창 생성
         createEmotionStatusContainer();
 
+        // 화면 크기에 따른 스타일 적용
+        handleResize();
+
         // 일정 시간 후 관찰자 설정 (페이지 초기화를 위한 시간 제공)
         setTimeout(setupObserver, 2000);
     });
@@ -2470,5 +2481,13 @@
     // URL에 초기화 파라미터가 있는지 확인
     if (window.location.href.includes('emotion_reset')) {
         showNotification('감정 시각화 설정이 초기화되었습니다. 새로운 설정을 구성하세요.', 'info', 5000);
+    }
+
+    // 모바일 화면에서 강제로 클래스 추가
+    if (window.innerWidth <= 768) {
+        document.addEventListener('DOMContentLoaded', function () {
+            const container = document.getElementById('emotion-status-container');
+            if (container) container.classList.add('mobile-view');
+        });
     }
 })();
