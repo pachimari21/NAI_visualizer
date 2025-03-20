@@ -12,19 +12,6 @@
 (function () {
     'use strict';
 
-    // 스크립트 시작 부분 근처에 이 코드 추가
-    document.addEventListener('DOMContentLoaded', function () {
-        const container = document.getElementById('emotion-status-container');
-        if (container) {
-            container.style.position = 'fixed';
-            container.style.top = '0';
-            container.style.left = '0';
-            container.style.width = '100%';
-            container.style.right = '0';
-            container.style.borderRadius = '0';
-        }
-    });
-
     // localStorage 헬퍼 함수 (GM_* 함수 대체)
     const localStorage_getValue = function (key, defaultValue) {
         const value = localStorage.getItem(key);
@@ -2475,9 +2462,6 @@
     window.addEventListener('load', () => {
         // 감정 상태창 생성
         createEmotionStatusContainer();
-
-        // 화면 크기에 따른 스타일 적용
-        handleResize();
 
         // 일정 시간 후 관찰자 설정 (페이지 초기화를 위한 시간 제공)
         setTimeout(setupObserver, 2000);
