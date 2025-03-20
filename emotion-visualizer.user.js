@@ -732,12 +732,11 @@
 
         /* 모바일 반응형 스타일 */
         @media (max-width: 768px) {
-            .emotion-status-container {
-                width: 100%;
-                right: 0;
-                left: 0;
-                top: 0;
-                border-radius: 0;
+             width: 100% !important;
+             right: 0 !important;
+             left: 0 !important;
+             top: 0 !important;
+             border-radius: 0 !important;
             }
 
             .emotion-status-header {
